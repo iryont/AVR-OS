@@ -9,7 +9,6 @@
 *.suo
 *.user
 *.sln.docstates
-*.cproj
 
 # Build results
 
