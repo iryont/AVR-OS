@@ -161,7 +161,7 @@ uint8_t osCAS(uint8_t *v, uint8_t p, uint8_t q)
 
 uint8_t* osInitializeStack(uint8_t* topOfStack, void (*taskFunction)(void*), void* taskParameter)
 {
-	uint16_t address = 0;
+    uint16_t address = 0;
 
     // indicates top of the stack - debug information
     *topOfStack = 0x13;
@@ -180,7 +180,7 @@ uint8_t* osInitializeStack(uint8_t* topOfStack, void (*taskFunction)(void*), voi
     topOfStack--;
 
     // put start of the stack on top since it will be fetched by ret(i) instruction of the context switch
-	address = (uint16_t)taskFunction;
+    address = (uint16_t)taskFunction;
     *topOfStack = (address >> 0) & 0xff;
     topOfStack--;
     *topOfStack = (address >> 8) & 0xff;
@@ -243,7 +243,7 @@ uint8_t* osInitializeStack(uint8_t* topOfStack, void (*taskFunction)(void*), voi
 
     // initialize R24-R25
     // which is a function argument
-	address = (uint16_t)taskParameter;
+    address = (uint16_t)taskParameter;
     *topOfStack = (address >> 0) & 0xff;
     topOfStack--;
     *topOfStack = (address >> 8) & 0xff;

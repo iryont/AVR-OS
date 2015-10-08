@@ -21,23 +21,71 @@
  * THE SOFTWARE.
  */
 
-#include "os.h"
+#include <stdio.h>
+#include "system/system.h"
 
-void osInit()
+volatile int a = 0;
+Mutex *mutex = NULL;
+
+void task01(void* parameters)
 {
-    osTasksQueueInit();
-    osSchedulerInit();
-    osSetupTimerInterrupt();
+    while(1) {
+        osMutexLock(mutex);
+
+        a = (a + 1) % 32000;
+        if(a == 20)
+            a++;
+
+        while(a < 2000)
+            a++;
+
+        osMutexUnlock(mutex);
+    }
 }
 
-void osRun()
+void task02(void* parameters)
 {
-    // enable interrupts
-    ENABLE_INTERRUPTS
+    osMutexLock(mutex);
 
-    // yield without saving the context
-    osNonSavableYield();
+    a = (a + 1) % 32000;
+    if(a == 20)
+        a++;
 
-    // should never get here
-    return;
+    while(a < 2000)
+        a++;
+
+    osMutexUnlock(mutex);
+}
+
+void task03(void *parameters)
+{
+    while(1) {
+        osMutexLock(mutex);
+
+        a = (a + 1) % 32000;
+        if(a == 20)
+            a++;
+
+        while(a < 2000)
+            a++;
+
+        osMutexUnlock(mutex);
+    }
+}
+
+int main(int argc, char* argv[])
+{
+    // initialize operating system
+    osInit();
+
+    // create lockable object
+    mutex = osMutexCreate();
+
+    // add some tasks
+    osCreateTask(task01, NULL, 64, 4);
+    osCreateTask(task02, NULL, 64, 4);
+    osCreateTask(task03, NULL, 64, 3);
+
+    // run
+    osRun();
 }

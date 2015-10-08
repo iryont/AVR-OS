@@ -113,51 +113,51 @@
     <OutputFileExtension>.elf</OutputFileExtension>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="src\asm.c">
+    <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\asm.h">
+    <Compile Include="system\asm.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\main.c">
+    <Compile Include="system\asm.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\mutex.c">
+    <Compile Include="system\mutex.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\mutex.h">
+    <Compile Include="system\mutex.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\os.c">
+    <Compile Include="system\system.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\os.h">
+    <Compile Include="system\system.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\pch.h">
+    <Compile Include="system\pch.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\queue.c">
+    <Compile Include="system\queue.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\queue.h">
+    <Compile Include="system\queue.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\scheduler.c">
+    <Compile Include="system\scheduler.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\scheduler.h">
+    <Compile Include="system\scheduler.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\tasks.c">
+    <Compile Include="system\tasks.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\tasks.h">
+    <Compile Include="system\tasks.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="src" />
+    <Folder Include="system" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>
