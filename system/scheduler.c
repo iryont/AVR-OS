@@ -80,11 +80,12 @@ void osContextSwitch(int8_t resumable, int8_t incremental)
             if(task != osCurrentTask)
                 task->age++;
 
-            if(task->wait > 0) {
+            if(task->wait > 0)
                 task->wait--;
-                continue;
-            }
         }
+
+        if(task->wait > 0)
+            continue;
 
         // no task yet, so choose this one
         if(!target) {
