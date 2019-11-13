@@ -32,7 +32,7 @@ void osWait(uint16_t wait);
 void osTaskExit();
 void osContextSwitch(int8_t resumable, int8_t incremental);
 
-TaskControlBlock* osCreateTask(void (*taskFunction)(void*), void *taskParameter, uint8_t taskStackSize, uint8_t taskPriority);
+TaskControlBlock* osCreateTask(void (*function)(void*), void *param, uint8_t stackSize, uint8_t priority);
 void osTaskDestroy(TaskControlBlock *task);
 
 #endif

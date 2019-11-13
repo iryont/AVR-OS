@@ -106,12 +106,21 @@ void osContextSwitch(int8_t resumable, int8_t incremental)
     osCurrentTask->age = 0;
 }
 
-TaskControlBlock* osCreateTask(void (*taskFunction)(void*), void *taskParameter, uint8_t taskStackSize, uint8_t taskPriority)
+TaskControlBlock* osCreateTask(void (*function)(void*), void *param, uint8_t stackSize, uint8_t priority)
 {
     TaskControlBlock *task = (TaskControlBlock*)malloc(sizeof(TaskControlBlock));
+    if(!task)
+        return NULL;
 
-    task->topOfStack = osInitializeStack(malloc(taskStackSize) + taskStackSize - 1, taskFunction, taskParameter);
-    task->priority = taskPriority;
+    uint8_t* stack = malloc(stackSize);
+    if(!stack)
+        return NULL;
+
+    // stack pointer and stack chunk
+    task->sp = osInitializeStack(stack + stackSize - 1, function, param);
+    task->sc = stack;
+
+    task->priority = priority;
     task->wait = 0;
     task->age = 0;
 
@@ -121,6 +130,6 @@ TaskControlBlock* osCreateTask(void (*taskFunction)(void*), void *taskParameter,
 
 void osTaskDestroy(TaskControlBlock *task)
 {
-    free(task->topOfStack);
+    free(task->sc);
     free(task);
 }

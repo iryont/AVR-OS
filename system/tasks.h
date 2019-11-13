@@ -27,7 +27,8 @@
 #include <stdio.h>
 
 typedef struct {
-    uint8_t* topOfStack;
+    uint8_t* sp;
+    uint8_t* sc;
 
     // rest stuff
     uint8_t priority;
