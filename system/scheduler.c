@@ -113,8 +113,10 @@ TaskControlBlock* osCreateTask(void (*function)(void*), void *param, uint8_t sta
         return NULL;
 
     uint8_t* stack = malloc(stackSize);
-    if(!stack)
+    if(!stack) {
+        free(task);
         return NULL;
+    }
 
     // stack pointer and stack chunk
     task->sp = osInitializeStack(stack + stackSize - 1, function, param);
