@@ -21,15 +21,34 @@
  * THE SOFTWARE.
  */
 
-#ifndef _RTOS_H
-#define _RTOS_H
+#ifndef OS_SYSTEM_H
+#define OS_SYSTEM_H
 
-#include "tasks.h"
+#include "config.h"
 #include "asm.h"
+#include "tasks.h"
 #include "scheduler.h"
 #include "mutex.h"
+#include "semaphore.h"
+#include "queue.h"
+#include "event.h"
+#include "timer.h"
+#include "memory.h"
 
-void osInit();
-void osRun();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void osInit(void);
+void osRun(void) __attribute__ ((noreturn));
+
+// called over and over again whenever there is nothing else to do, puts the
+// processor to sleep by default. Define your own one to replace it, just
+// keep in mind the idle task is not allowed to block.
+void osIdleHook(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

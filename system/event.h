@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef OS_MUTEX_H
-#define OS_MUTEX_H
+#ifndef OS_EVENT_H
+#define OS_EVENT_H
 
 #include "scheduler.h"
 
@@ -30,37 +30,32 @@
 extern "C" {
 #endif
 
-typedef struct OsMutex OsMutex;
-
-// a mutex filled with zeros is a valid, unlocked one
-struct OsMutex {
-    // has to stay first, that is how a waiting task finds the mutex
+// eight flags tasks can wait for, an event filled with zeros is a valid one
+typedef struct {
     OsTask *waiters;
-    OsTask *owner;
+    uint8_t flags;
+} OsEvent;
 
-#if OS_CFG_MUTEX_INHERITANCE
-    // next mutex locked by the same owner
-    OsMutex *nextOwned;
-#endif
-};
+// wait for any of the flags (default) or for all of them
+#define OS_EVENT_ANY    0x00
+#define OS_EVENT_ALL    0x01
 
-void osMutexInit(OsMutex *mutex);
-bool osMutexTryLock(OsMutex *mutex, OsTick timeout);
-void osMutexUnlock(OsMutex *mutex);
+// flags the task has been waiting for are cleared once it gets them, unless asked not to
+#define OS_EVENT_KEEP   0x02
 
-static inline void osMutexLock(OsMutex *mutex)
-{
-    osMutexTryLock(mutex, OS_WAIT_FOREVER);
-}
+void osEventInit(OsEvent *event);
 
-#if OS_CFG_MUTEX_INHERITANCE
-// internals of the kernel
-void osMutexReleaseAll(OsTask *task);
-#endif
+// returns the flags which ended the wait, zero means timeout
+uint8_t osEventWait(OsEvent *event, uint8_t flags, uint8_t options, OsTick timeout);
+
+void osEventSet(OsEvent *event, uint8_t flags);
+void osEventSetFromISR(OsEvent *event, uint8_t flags);
+void osEventClear(OsEvent *event, uint8_t flags);
+uint8_t osEventGet(OsEvent *event);
 
 #if OS_CFG_DYNAMIC
-OsMutex *osMutexCreate(void);
-void osMutexDestroy(OsMutex *mutex);
+OsEvent *osEventCreate(void);
+void osEventDestroy(OsEvent *event);
 #endif
 
 #ifdef __cplusplus

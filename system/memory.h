@@ -21,18 +21,36 @@
  * THE SOFTWARE.
  */
 
-#ifndef PCH_H_
-#define PCH_H_
+#ifndef OS_MEMORY_H
+#define OS_MEMORY_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <string.h>
-#include <avr/io.h>
-#include <util/delay.h>
-#include <util/atomic.h>
-#include <avr/interrupt.h>
-#include <avr/eeprom.h>
-#include <compat/twi.h>
+#include "scheduler.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// pool of memory blocks of the same size: constant time, no fragmentation
+// and safe to use everywhere, interrupt handlers included.
+typedef struct {
+    void *free;
+} OsPool;
+
+// size of the memory needed by a pool, blocks have to hold a pointer at least
+#define OS_POOL_MEMORY(blockSize, blocks) ((uint16_t)(blockSize) * (blocks))
+
+void osPoolInit(OsPool *pool, void *memory, uint8_t blockSize, uint8_t blocks);
+void *osPoolAlloc(OsPool *pool);
+void osPoolFree(OsPool *pool, void *block);
+
+#if OS_CFG_DYNAMIC
+// malloc and free which can be used by tasks at any time
+void *osMalloc(size_t size);
+void osFree(void *memory);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -21,50 +21,69 @@
  * THE SOFTWARE.
  */
 
-#ifndef OS_MUTEX_H
-#define OS_MUTEX_H
+#include <stdlib.h>
+#include "memory.h"
 
-#include "scheduler.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct OsMutex OsMutex;
-
-// a mutex filled with zeros is a valid, unlocked one
-struct OsMutex {
-    // has to stay first, that is how a waiting task finds the mutex
-    OsTask *waiters;
-    OsTask *owner;
-
-#if OS_CFG_MUTEX_INHERITANCE
-    // next mutex locked by the same owner
-    OsMutex *nextOwned;
-#endif
-};
-
-void osMutexInit(OsMutex *mutex);
-bool osMutexTryLock(OsMutex *mutex, OsTick timeout);
-void osMutexUnlock(OsMutex *mutex);
-
-static inline void osMutexLock(OsMutex *mutex)
+void osPoolInit(OsPool *pool, void *memory, uint8_t blockSize, uint8_t blocks)
 {
-    osMutexTryLock(mutex, OS_WAIT_FOREVER);
+    // free blocks make a list, each one starts with a pointer to the next one
+    uint8_t *block = (uint8_t*)memory;
+
+    pool->free = NULL;
+    while(blocks--) {
+        *(void**)block = pool->free;
+        pool->free = block;
+        block += blockSize;
+    }
 }
 
-#if OS_CFG_MUTEX_INHERITANCE
-// internals of the kernel
-void osMutexReleaseAll(OsTask *task);
-#endif
+void *osPoolAlloc(OsPool *pool)
+{
+    void *block;
+
+    OS_CRITICAL {
+        block = pool->free;
+        if(block)
+            pool->free = *(void**)block;
+    }
+
+    return block;
+}
+
+void osPoolFree(OsPool *pool, void *block)
+{
+    OS_CRITICAL {
+        *(void**)block = pool->free;
+        pool->free = block;
+    }
+}
 
 #if OS_CFG_DYNAMIC
-OsMutex *osMutexCreate(void);
-void osMutexDestroy(OsMutex *mutex);
-#endif
+// malloc is not reentrant, nobody can get in the way as long as interrupts are disabled
+void *osMalloc(size_t size)
+{
+    void *memory;
 
-#ifdef __cplusplus
+    OS_CRITICAL {
+        memory = malloc(size);
+    }
+
+    // memory of tasks which are gone might be all we need
+    if(!memory) {
+        osTaskReap();
+
+        OS_CRITICAL {
+            memory = malloc(size);
+        }
+    }
+
+    return memory;
 }
-#endif
 
+void osFree(void *memory)
+{
+    OS_CRITICAL {
+        free(memory);
+    }
+}
 #endif

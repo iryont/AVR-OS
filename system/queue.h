@@ -21,21 +21,44 @@
  * THE SOFTWARE.
  */
 
-#ifndef _QUEUE_H
-#define _QUEUE_H
+#ifndef OS_QUEUE_H
+#define OS_QUEUE_H
 
-#include <stdio.h>
-#include "tasks.h"
+#include "scheduler.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// queue of messages, every message is a copy of itemSize bytes
 typedef struct {
-    TaskControlBlock **tasks;
-    uint8_t size;
-    uint8_t length;
-} Queue;
+    // senders if the queue is full, receivers if it is empty
+    OsTask *waiters;
 
-Queue* osQueueCreate();
-void osQueueDestroy(Queue *queue);
-void osQueueRemove(Queue *queue, TaskControlBlock *task);
-void osQueueInsert(Queue *queue, TaskControlBlock *task);
+    uint8_t *buffer;
+    uint8_t itemSize;
+    uint8_t length;
+    uint8_t count;
+    uint8_t head;
+} OsQueue;
+
+// size of the buffer needed by a queue
+#define OS_QUEUE_MEMORY(itemSize, length) ((uint16_t)(itemSize) * (length))
+
+void osQueueInit(OsQueue *queue, void *buffer, uint8_t itemSize, uint8_t length);
+bool osQueueSend(OsQueue *queue, const void *item, OsTick timeout);
+bool osQueueSendFromISR(OsQueue *queue, const void *item);
+bool osQueueReceive(OsQueue *queue, void *item, OsTick timeout);
+bool osQueueReceiveFromISR(OsQueue *queue, void *item);
+uint8_t osQueueCount(OsQueue *queue);
+
+#if OS_CFG_DYNAMIC
+OsQueue *osQueueCreate(uint8_t itemSize, uint8_t length);
+void osQueueDestroy(OsQueue *queue);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

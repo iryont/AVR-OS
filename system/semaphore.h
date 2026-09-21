@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef OS_MUTEX_H
-#define OS_MUTEX_H
+#ifndef OS_SEMAPHORE_H
+#define OS_SEMAPHORE_H
 
 #include "scheduler.h"
 
@@ -30,37 +30,22 @@
 extern "C" {
 #endif
 
-typedef struct OsMutex OsMutex;
-
-// a mutex filled with zeros is a valid, unlocked one
-struct OsMutex {
-    // has to stay first, that is how a waiting task finds the mutex
+typedef struct {
     OsTask *waiters;
-    OsTask *owner;
+    uint8_t count;
+    uint8_t limit;
+} OsSemaphore;
 
-#if OS_CFG_MUTEX_INHERITANCE
-    // next mutex locked by the same owner
-    OsMutex *nextOwned;
-#endif
-};
-
-void osMutexInit(OsMutex *mutex);
-bool osMutexTryLock(OsMutex *mutex, OsTick timeout);
-void osMutexUnlock(OsMutex *mutex);
-
-static inline void osMutexLock(OsMutex *mutex)
-{
-    osMutexTryLock(mutex, OS_WAIT_FOREVER);
-}
-
-#if OS_CFG_MUTEX_INHERITANCE
-// internals of the kernel
-void osMutexReleaseAll(OsTask *task);
-#endif
+// limit of 1 makes a binary semaphore
+void osSemaphoreInit(OsSemaphore *semaphore, uint8_t count, uint8_t limit);
+bool osSemaphoreTake(OsSemaphore *semaphore, OsTick timeout);
+void osSemaphoreGive(OsSemaphore *semaphore);
+void osSemaphoreGiveFromISR(OsSemaphore *semaphore);
+uint8_t osSemaphoreCount(OsSemaphore *semaphore);
 
 #if OS_CFG_DYNAMIC
-OsMutex *osMutexCreate(void);
-void osMutexDestroy(OsMutex *mutex);
+OsSemaphore *osSemaphoreCreate(uint8_t count, uint8_t limit);
+void osSemaphoreDestroy(OsSemaphore *semaphore);
 #endif
 
 #ifdef __cplusplus

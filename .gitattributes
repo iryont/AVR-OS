@@ -1,0 +1,3 @@
+# the same line endings everywhere: a Makefile or a script checked out
+# with CRLF on Windows does not work once it is used from Linux
+* text=auto eol=lf

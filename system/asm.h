@@ -21,27 +21,50 @@
  * THE SOFTWARE.
  */
 
-#ifndef _PORT_H
-#define _PORT_H
+#ifndef OS_ASM_H
+#define OS_ASM_H
 
-#include "pch.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/atomic.h>
+#include "config.h"
 
-#define ENABLE_INTERRUPTS 	asm volatile("sei");
-#define DISABLE_INTERRUPTS 	asm volatile("cli");
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct OsTask;
+
+// the kernel keeps interrupts disabled while it works on its lists
+// and brings back the previous state afterwards
+#define OS_CRITICAL ATOMIC_BLOCK(ATOMIC_RESTORESTATE)
+
+// size of a return address on the stack
+#ifdef __AVR_3_BYTE_PC__
+#define OS_PC_SIZE 3
+#else
+#define OS_PC_SIZE 2
+#endif
+
+// stack taken by a task which is not running: registers r2-r17, r28, r29
+// and the address the context switch returns to
+#define OS_CONTEXT_SIZE (18 + OS_PC_SIZE)
 
 // interrupts
-void osSetupTimerInterrupt();
-
-// atomic
-uint8_t osTAS(uint8_t *v);
-uint8_t osCAS(uint8_t *v, uint8_t p, uint8_t q);
+void osPortTickStart(void);
 
 // stack
-uint8_t* osInitializeStack(uint8_t* topOfStack, void (*taskFunction)(void*), void* taskParameter);
+uint8_t *osPortStackInit(uint8_t *top, void (*function)(void*), void *param);
 
-// yield
-void osNonSavableYield(void) __attribute__ ((naked));
-void osNonResumableYield(void) __attribute__ ((naked));
-void osResumableYield(void) __attribute__ ((naked));
+// context switch, interrupts have to be disabled
+// returns once the previous task is running again, with the result it has been woken up with
+uint8_t osPortSwitch(struct OsTask *next, struct OsTask *prev);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

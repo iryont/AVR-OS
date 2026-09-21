@@ -21,8 +21,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef OS_MUTEX_H
-#define OS_MUTEX_H
+#ifndef OS_TIMER_H
+#define OS_TIMER_H
 
 #include "scheduler.h"
 
@@ -30,37 +30,31 @@
 extern "C" {
 #endif
 
-typedef struct OsMutex OsMutex;
+#if OS_CFG_TIMERS
 
-// a mutex filled with zeros is a valid, unlocked one
-struct OsMutex {
-    // has to stay first, that is how a waiting task finds the mutex
-    OsTask *waiters;
-    OsTask *owner;
+typedef struct OsTimer OsTimer;
 
-#if OS_CFG_MUTEX_INHERITANCE
-    // next mutex locked by the same owner
-    OsMutex *nextOwned;
-#endif
+struct OsTimer {
+    OsTimer *next;
+    OsTick when;
+    OsTick period;
+    void (*function)(void*);
+    void *param;
 };
 
-void osMutexInit(OsMutex *mutex);
-bool osMutexTryLock(OsMutex *mutex, OsTick timeout);
-void osMutexUnlock(OsMutex *mutex);
+// calls the function after the given number of ticks and then every period
+// ticks, or just once if the period is zero. The function is called by the
+// tick interrupt: it has to be short, it cannot block and it is limited to
+// functions with the FromISR suffix. Starting a timer which is running
+// already starts it over.
+void osTimerStart(OsTimer *timer, OsTick delay, OsTick period, void (*function)(void*), void *param);
+void osTimerStop(OsTimer *timer);
+bool osTimerActive(OsTimer *timer);
 
-static inline void osMutexLock(OsMutex *mutex)
-{
-    osMutexTryLock(mutex, OS_WAIT_FOREVER);
-}
-
-#if OS_CFG_MUTEX_INHERITANCE
 // internals of the kernel
-void osMutexReleaseAll(OsTask *task);
-#endif
+extern OsTimer *osTimers;
+void osTimerTick(OsTick ticks);
 
-#if OS_CFG_DYNAMIC
-OsMutex *osMutexCreate(void);
-void osMutexDestroy(OsMutex *mutex);
 #endif
 
 #ifdef __cplusplus

@@ -21,18 +21,60 @@
  * THE SOFTWARE.
  */
 
-#ifndef _SCHEDULER_H
-#define _SCHEDULER_H
+#ifndef OS_SCHEDULER_H
+#define OS_SCHEDULER_H
 
-#include <stdio.h>
 #include "tasks.h"
 
-void osSchedulerInit();
-void osWait(uint16_t wait);
-void osTaskExit();
-void osContextSwitch(int8_t resumable, int8_t incremental);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-TaskControlBlock* osCreateTask(void (*function)(void*), void *param, uint8_t stackSize, uint8_t priority);
-void osTaskDestroy(TaskControlBlock *task);
+// timeouts
+#define OS_NO_WAIT      ((OsTick)0)
+#define OS_WAIT_FOREVER ((OsTick)-1)
+
+// milliseconds to ticks, rounded up
+#define OS_MS(ms) ((OsTick)(((ms) * (uint32_t)OS_CFG_TICK_HZ + 999) / 1000))
+
+// an interrupt handler which wakes tasks up. Tasks woken by the handler get
+// the processor as soon as it returns, not with the next tick. Only functions
+// with the FromISR suffix (and those which never block) can be called inside.
+#define OS_ISR(vector)                                                         \
+    static inline void vector##_handler(void) __attribute__ ((always_inline)); \
+    ISR(vector)                                                                \
+    {                                                                          \
+        vector##_handler();                                                    \
+        osSchedule(0);                                                         \
+    }                                                                          \
+    static inline void vector##_handler(void)
+
+extern OsTask *osCurrentTask;
+extern OsTask *osReadyList;
+extern OsTask osIdleTask;
+
+OsTick osTickCount(void);
+void osYield(void);
+void osDelay(OsTick ticks);
+void osDelayUntil(OsTick *previous, OsTick period);
+
+// internals of the kernel, interrupts have to be disabled
+void osListInsert(OsTask **list, OsTask *task, uint8_t key);
+void osListRemove(OsTask **list, OsTask *task);
+void osRequeue(OsTask *task);
+uint8_t osInheritedPriority(OsTask *task);
+void osPriorityRaise(OsTask *task, uint8_t priority);
+
+uint8_t osBlock(OsTask **list, OsTick timeout);
+void osUnblock(OsTask *task);
+void osWake(OsTask *task, uint8_t result);
+void osReady(OsTask *task);
+uint8_t osDispatch(void);
+void osSchedule(uint8_t yield);
+void osTickHandler(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
